@@ -5,6 +5,7 @@ import (
 	"backend/utils"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,7 +17,6 @@ func GetAllUsers(ctx *gin.Context) {
 	userIDRaw, _ := ctx.Get("userID")
 	userID := int(userIDRaw.(float64))
 	fmt.Printf("User yang sedang login adalah %d\n", userID)
-
 
 	search := ctx.DefaultQuery("search", "")
 	users, err := models.FindAllUser(search)
@@ -71,5 +71,23 @@ func CreateUser(ctx *gin.Context) {
 		Success: true,
 		Message: "User created",
 		Results: user,
+	})
+}
+
+func DeleteUser(ctx *gin.Context) {
+	id := ctx.Param("id")
+	userID, _ := strconv.Atoi(id)
+
+	if err := models.DeleteUser(userID); err != nil {
+		ctx.JSON(http.StatusInternalServerError, utils.Response{
+			Success: false,
+			Message: "Failed to delete user",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, utils.Response{
+		Success: true,
+		Message: "User deleted",
 	})
 }

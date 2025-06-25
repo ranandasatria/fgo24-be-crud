@@ -90,3 +90,21 @@ func CreateUser(user User) error {
 	)
 	return err
 }
+
+func DeleteUser(id int) error {
+	conn, err := utils.ConnectDB()
+	if err != nil {
+		return err
+	}
+	defer conn.Release()
+
+	_, err = conn.Exec(
+		context.Background(),
+		`
+		DELETE FROM users
+		WHERE id = $1
+		`,
+		id,
+	)
+	return err
+}
