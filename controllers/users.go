@@ -9,7 +9,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GetAllUsers(ctx *gin.Context){
+func GetAllUsers(ctx *gin.Context) {
+
+	// page, _ := strconv.Atoi(ctx.DefaultQuery(""))
+
+	userIDRaw, _ := ctx.Get("userID")
+	userID := int(userIDRaw.(float64))
+	fmt.Printf("User yang sedang login adalah %d\n", userID)
+
+
 	search := ctx.DefaultQuery("search", "")
 	users, err := models.FindAllUser(search)
 	if err != nil {
