@@ -79,6 +79,14 @@ func DeleteUser(ctx *gin.Context) {
 	userID, _ := strconv.Atoi(id)
 
 	if err := models.DeleteUser(userID); err != nil {
+
+		if err.Error() == "user not found" {
+			ctx.JSON(http.StatusNotFound, utils.Response{
+				Success: false,
+				Message: "User ID not found",
+			})
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, utils.Response{
 			Success: false,
 			Message: "Failed to delete user",
@@ -89,5 +97,41 @@ func DeleteUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, utils.Response{
 		Success: true,
 		Message: "User deleted",
+	})
+}
+
+func UpdateUser(ctx *gin.Context) {
+	var user models.User
+	id := ctx.Param("id")
+
+	if err := ctx.ShouldBindJSON(&user); err != nil {
+		ctx.JSON(http.StatusBadRequest, utils.Response{
+			Success: false,
+			Message: "Invalid input",
+		})
+		return
+	}
+
+	userID, _ := strconv.Atoi(id)
+	if err := models.UpdateUser(userID, user); err != nil {
+		if err.Error() == "user not found" {
+			ctx.JSON(http.StatusNotFound, utils.Response{
+				Success: false,
+				Message: "User ID not found",
+			})
+			return
+		}
+		
+		ctx.JSON(http.StatusInternalServerError, utils.Response{
+			Success: false,
+			Message: "Failed to update user",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, utils.Response{
+		Success: true,
+		Message: "User updated",
+		Results: user,
 	})
 }

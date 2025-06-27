@@ -9,3 +9,5 @@ CREATE TABLE users(
 )
 
 select * from users;
+
+update users set name = 'rananda' where id = 2;
