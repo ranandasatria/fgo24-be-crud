@@ -47,6 +47,16 @@ func DetailUser(ctx *gin.Context) {
 	})
 }
 
+// CreateUser godoc
+// @Summary Create a new user
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param data body models.User true "User Data"
+// @Success 201 {object} utils.Response{results=models.User}
+// @Failure 400 {object} utils.Response{success=bool,message=string}
+// @Failure 500 {object} utils.Response{success=bool,message=string}
+// @Router /user [post]
 func CreateUser(ctx *gin.Context) {
 	fmt.Println("masuk")
 	var user models.User
@@ -60,6 +70,7 @@ func CreateUser(ctx *gin.Context) {
 	}
 
 	if err := models.CreateUser(user); err != nil {
+		 fmt.Println("CreateUser error:", err.Error())
 		ctx.JSON(http.StatusInternalServerError, utils.Response{
 			Success: false,
 			Message: "Failed to create user",

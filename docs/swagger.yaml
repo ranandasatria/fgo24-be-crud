@@ -1,0 +1,82 @@
+basePath: /
+definitions:
+  models.User:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      password:
+        type: string
+    type: object
+  utils.Response:
+    properties:
+      errors: {}
+      message:
+        type: string
+      results: {}
+      success:
+        type: boolean
+    type: object
+info:
+  contact: {}
+  description: Simple user CRUD API with Gin
+  title: CRUD Users API
+  version: "1.0"
+paths:
+  /user:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User Data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/models.User'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                results:
+                  $ref: '#/definitions/models.User'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                message:
+                  type: string
+                success:
+                  type: boolean
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                message:
+                  type: string
+                success:
+                  type: boolean
+              type: object
+      summary: Create a new user
+      tags:
+      - users
+securityDefinitions:
+  Token:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

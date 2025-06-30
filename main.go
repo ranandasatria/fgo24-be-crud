@@ -9,6 +9,18 @@ import (
 	"github.com/joho/godotenv"
 )
 
+
+// @title CRUD Users API
+// @version 1.0
+// @description Simple user CRUD API with Gin
+
+// @BasePath /
+
+// @SecurityDefinitions.ApiKey Token
+// @in header
+// @name Authorization
+
+
 func main() {
 	r := gin.Default()
 
