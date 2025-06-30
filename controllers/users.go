@@ -10,6 +10,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// GetAllUsers godoc
+// @Summary Get all users
+// @Tags users
+// @Security Token
+// @Accept json
+// @Produce json
+// @Param search query string false "Search by name or email"
+// @Success 200 {object} utils.Response{results=[]models.User}
+// @Failure 500 {object} utils.Response{success=bool,message=string}
+// @Router /user [get]
 func GetAllUsers(ctx *gin.Context) {
 
 	// page, _ := strconv.Atoi(ctx.DefaultQuery(""))
@@ -36,6 +46,16 @@ func GetAllUsers(ctx *gin.Context) {
 	})
 }
 
+// DetailUser godoc
+// @Summary Get detail of a user by ID
+// @Tags users
+// @Security Token
+// @Accept json
+// @Produce json
+// @Param id path int true "User ID"
+// @Success 200 {object} utils.Response{results=map[string]string}
+// @Failure 400 {object} utils.Response{success=bool,message=string}
+// @Router /user/{id} [get]
 func DetailUser(ctx *gin.Context) {
 	id := ctx.Param("id")
 	ctx.JSON(http.StatusOK, utils.Response{
@@ -85,6 +105,17 @@ func CreateUser(ctx *gin.Context) {
 	})
 }
 
+// DeleteUser godoc
+// @Summary Delete a user by ID
+// @Tags users
+// @Security Token
+// @Accept json
+// @Produce json
+// @Param id path int true "User ID"
+// @Success 200 {object} utils.Response
+// @Failure 404 {object} utils.Response{success=bool,message=string}
+// @Failure 500 {object} utils.Response{success=bool,message=string}
+// @Router /user/{id} [delete]
 func DeleteUser(ctx *gin.Context) {
 	id := ctx.Param("id")
 	userID, _ := strconv.Atoi(id)
@@ -111,6 +142,19 @@ func DeleteUser(ctx *gin.Context) {
 	})
 }
 
+// UpdateUser godoc
+// @Summary Update user data by ID
+// @Tags users
+// @Security Token
+// @Accept json
+// @Produce json
+// @Param id path int true "User ID"
+// @Param data body models.User true "User Data"
+// @Success 200 {object} utils.Response{results=models.User}
+// @Failure 400 {object} utils.Response{success=bool,message=string}
+// @Failure 404 {object} utils.Response{success=bool,message=string}
+// @Failure 500 {object} utils.Response{success=bool,message=string}
+// @Router /user/{id} [patch]
 func UpdateUser(ctx *gin.Context) {
 	var user models.User
 	id := ctx.Param("id")
