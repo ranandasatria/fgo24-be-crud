@@ -3,9 +3,13 @@ package controllers
 import (
 	"backend/models"
 	"backend/utils"
+	"context"
+	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -28,6 +32,33 @@ func GetAllUsers(ctx *gin.Context) {
 	// userID := int(userIDRaw.(float64))
 	// fmt.Printf("User yang sedang login adalah %d\n", userID)
 
+	err := utils.RedisClient.Ping(context.Background()).Err()
+	noredis := false
+	if err != nil {
+		if strings.Contains(err.Error(), "refused") {
+			noredis = true
+		}
+	}
+
+	if !noredis {
+		result := utils.RedisClient.Exists(context.Background(), ctx.Request.RequestURI)
+		if result.Val() != 0 {
+			users := models.User{}
+			data := utils.RedisClient.Get(context.Background(), ctx.Request.RequestURI)
+			str := data.Val()
+			if err = json.Unmarshal([]byte(str), &users); err != nil {
+				log.Println("Unmarshal error:", err)
+			} else {
+				ctx.JSON(http.StatusOK, utils.Response{
+					Success: true,
+					Message: "List all users (from Redis)",
+					Results: users,
+				})
+			}
+			return
+		}
+	}
+
 	search := ctx.DefaultQuery("search", "")
 	users, err := models.FindAllUser(search)
 	if err != nil {
@@ -37,6 +68,19 @@ func GetAllUsers(ctx *gin.Context) {
 			Message: "Internal server error",
 		})
 		return
+	}
+
+	if !noredis {
+		encoded, err := json.Marshal(users)
+		if err != nil {
+			fmt.Println(err)
+			ctx.JSON(http.StatusInternalServerError, utils.Response{
+				Success: false,
+				Message: "Failed to get user from database",
+			})
+			return
+		}
+		utils.RedisClient.Set(context.Background(), ctx.Request.RequestURI, string(encoded), 0)
 	}
 
 	ctx.JSON(http.StatusOK, utils.Response{
@@ -90,7 +134,7 @@ func CreateUser(ctx *gin.Context) {
 	}
 
 	if err := models.CreateUser(user); err != nil {
-		 fmt.Println("CreateUser error:", err.Error())
+		fmt.Println("CreateUser error:", err.Error())
 		ctx.JSON(http.StatusInternalServerError, utils.Response{
 			Success: false,
 			Message: "Failed to create user",
@@ -176,7 +220,7 @@ func UpdateUser(ctx *gin.Context) {
 			})
 			return
 		}
-		
+
 		ctx.JSON(http.StatusInternalServerError, utils.Response{
 			Success: false,
 			Message: "Failed to update user",

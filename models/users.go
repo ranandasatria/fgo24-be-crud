@@ -3,22 +3,19 @@ package models
 import (
 	"backend/utils"
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
 )
 
 type User struct {
-	ID       int	`json:"id"`
+	ID       int    `json:"id"`
 	Name     string `json:"name" db:"name"`
 	Email    string `json:"email" db:"email"`
 	Password string `json:"password" db:"password"`
 }
 
 func FindAllUser(search string) ([]User, error) {
-	result := utils.RedisClient.Exists(context.Background(), "all-users")
-	if result.Val() == 0 {
 	conn, err := utils.ConnectDB()
 	if err != nil {
 		return []User{}, err
@@ -45,20 +42,7 @@ func FindAllUser(search string) ([]User, error) {
 		return []User{}, err
 	}
 
-	encoded, err := json.Marshal(users)
-
-	if err != nil {
-		return []User{}, err
-	}
-	utils.RedisClient.Set(context.Background(), "all-users", string(encoded), 0)
 	return users, nil
-	} else {
-		data := utils.RedisClient.Get(context.Background(), "all-users")
-		str := data.Val()
-		users := []User{}
-		json.Unmarshal([]byte(str), &users)
-		return users, nil
-	}
 }
 
 func FindOneUserByEmail(email string) (User, error) {
@@ -142,9 +126,9 @@ func UpdateUser(id int, user User) error {
 	defer conn.Release()
 
 	result, err := conn.Exec(
-	context.Background(),
-	`UPDATE users SET name = $1, email = $2, password = $3 WHERE id = $4`,
-	user.Name, user.Email, user.Password, id,
+		context.Background(),
+		`UPDATE users SET name = $1, email = $2, password = $3 WHERE id = $4`,
+		user.Name, user.Email, user.Password, id,
 	)
 	if err != nil {
 		return err
