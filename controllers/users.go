@@ -259,7 +259,7 @@ func DeleteUser(ctx *gin.Context) {
 	 if !noredis {
     utils.RedisClient.Del(context.Background(), "/user")
   }
-	
+
 	ctx.JSON(http.StatusOK, utils.Response{
 		Success: true,
 		Message: "User deleted",
@@ -280,6 +280,14 @@ func DeleteUser(ctx *gin.Context) {
 // @Failure 500 {object} utils.Response{success=bool,message=string}
 // @Router /user/{id} [patch]
 func UpdateUser(ctx *gin.Context) {
+	err := utils.RedisClient.Ping(context.Background()).Err()
+	noredis := false
+	if err != nil {
+		if strings.Contains(err.Error(), "refused"){
+			noredis = true
+		}
+	}
+
 	var user models.User
 	id := ctx.Param("id")
 
@@ -307,6 +315,10 @@ func UpdateUser(ctx *gin.Context) {
 		})
 		return
 	}
+
+	if !noredis {
+    utils.RedisClient.Del(context.Background(), "/user")
+  }
 
 	ctx.JSON(http.StatusOK, utils.Response{
 		Success: true,
