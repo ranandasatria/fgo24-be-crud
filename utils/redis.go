@@ -1,9 +1,22 @@
 package utils
 
-import "github.com/redis/go-redis/v9"
+import (
+	"os"
+	"strconv"
 
-var RedisClient = redis.NewClient(&redis.Options{
-	Addr:     "localhost:6379",
-	Password: "",
-	DB:       0,
-})
+	"github.com/joho/godotenv"
+	"github.com/redis/go-redis/v9"
+)
+
+func RedisClient() redis.Client {
+	godotenv.Load()
+	addr := os.Getenv("RDADDRESS")
+	pass := os.Getenv("RDPASSWORD")
+	db, _ := strconv.Atoi(os.Getenv("RDDB"))
+	var RedistClient = redis.NewClient(&redis.Options{
+		Addr:     addr,
+		Password: pass,
+		DB:       db,
+	})
+	return *RedistClient
+}

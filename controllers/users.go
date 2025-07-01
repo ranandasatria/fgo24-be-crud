@@ -32,7 +32,7 @@ func GetAllUsers(ctx *gin.Context) {
 	// userID := int(userIDRaw.(float64))
 	// fmt.Printf("User yang sedang login adalah %d\n", userID)
 
-	err := utils.RedisClient.Ping(context.Background()).Err()
+	err := utils.RedisClient().Ping(context.Background()).Err()
 	noredis := false
 	if err != nil {
 		if strings.Contains(err.Error(), "refused") {
@@ -41,10 +41,10 @@ func GetAllUsers(ctx *gin.Context) {
 	}
 
 	if !noredis {
-		result := utils.RedisClient.Exists(context.Background(), ctx.Request.RequestURI)
+		result := utils.RedisClient().Exists(context.Background(), ctx.Request.RequestURI)
 		if result.Val() != 0 {
 			users := []models.User{}
-			data := utils.RedisClient.Get(context.Background(), ctx.Request.RequestURI)
+			data := utils.RedisClient().Get(context.Background(), ctx.Request.RequestURI)
 			str := data.Val()
 			if err = json.Unmarshal([]byte(str), &users); err != nil {
 				log.Println("Unmarshal error:", err)
@@ -80,7 +80,7 @@ func GetAllUsers(ctx *gin.Context) {
 			})
 			return
 		}
-		utils.RedisClient.Set(context.Background(), ctx.Request.RequestURI, string(encoded), 0)
+		utils.RedisClient().Set(context.Background(), ctx.Request.RequestURI, string(encoded), 0)
 	}
 
 	ctx.JSON(http.StatusOK, utils.Response{
@@ -103,7 +103,7 @@ func GetAllUsers(ctx *gin.Context) {
 // @Failure 500 {object} utils.Response{success=bool,message=string}
 // @Router /user/{id} [get]
 func DetailUser(ctx *gin.Context) {
-	err := utils.RedisClient.Ping(context.Background()).Err()
+	err := utils.RedisClient().Ping(context.Background()).Err()
 	noredis := false
 	if err != nil {
 		if strings.Contains(err.Error(), "refused") {
@@ -122,10 +122,10 @@ func DetailUser(ctx *gin.Context) {
 	}
 
 	if !noredis {
-    exists := utils.RedisClient.Exists(context.Background(), ctx.Request.RequestURI)
+    exists := utils.RedisClient().Exists(context.Background(), ctx.Request.RequestURI)
     if exists.Val() != 0 {
       var cachedUser models.User
-      data := utils.RedisClient.Get(context.Background(), ctx.Request.RequestURI)
+      data := utils.RedisClient().Get(context.Background(), ctx.Request.RequestURI)
       if err := json.Unmarshal([]byte(data.Val()), &cachedUser); err == nil {
         ctx.JSON(http.StatusOK, utils.Response{
           Success: true,
@@ -156,7 +156,7 @@ func DetailUser(ctx *gin.Context) {
 	if !noredis {
     encoded, err := json.Marshal(user)
     if err == nil {
-      utils.RedisClient.Set(context.Background(), ctx.Request.RequestURI, string(encoded), 0)
+      utils.RedisClient().Set(context.Background(), ctx.Request.RequestURI, string(encoded), 0)
     }
   }
 
@@ -178,7 +178,7 @@ func DetailUser(ctx *gin.Context) {
 // @Failure 500 {object} utils.Response{success=bool,message=string}
 // @Router /user [post]
 func CreateUser(ctx *gin.Context) {
-	err := utils.RedisClient.Ping(context.Background()).Err()
+	err := utils.RedisClient().Ping(context.Background()).Err()
 	noredis := false
 	if err != nil {
 		if strings.Contains(err.Error(), "refused"){
@@ -206,7 +206,7 @@ func CreateUser(ctx *gin.Context) {
 	}
 
 	 if !noredis {
-    utils.RedisClient.Del(context.Background(), "/user")
+    utils.RedisClient().Del(context.Background(), "/user")
   }
 
 	ctx.JSON(http.StatusCreated, utils.Response{
@@ -228,7 +228,7 @@ func CreateUser(ctx *gin.Context) {
 // @Failure 500 {object} utils.Response{success=bool,message=string}
 // @Router /user/{id} [delete]
 func DeleteUser(ctx *gin.Context) {
-	err := utils.RedisClient.Ping(context.Background()).Err()
+	err := utils.RedisClient().Ping(context.Background()).Err()
 	noredis := false
 	if err != nil {
 		if strings.Contains(err.Error(), "refused"){
@@ -257,7 +257,7 @@ func DeleteUser(ctx *gin.Context) {
 	}
 
 	 if !noredis {
-    utils.RedisClient.Del(context.Background(), "/user")
+    utils.RedisClient().Del(context.Background(), "/user")
   }
 
 	ctx.JSON(http.StatusOK, utils.Response{
@@ -280,7 +280,7 @@ func DeleteUser(ctx *gin.Context) {
 // @Failure 500 {object} utils.Response{success=bool,message=string}
 // @Router /user/{id} [patch]
 func UpdateUser(ctx *gin.Context) {
-	err := utils.RedisClient.Ping(context.Background()).Err()
+	err := utils.RedisClient().Ping(context.Background()).Err()
 	noredis := false
 	if err != nil {
 		if strings.Contains(err.Error(), "refused"){
@@ -317,7 +317,7 @@ func UpdateUser(ctx *gin.Context) {
 	}
 
 	if !noredis {
-    utils.RedisClient.Del(context.Background(), "/user")
+    utils.RedisClient().Del(context.Background(), "/user")
   }
 
 	ctx.JSON(http.StatusOK, utils.Response{
