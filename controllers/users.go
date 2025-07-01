@@ -43,7 +43,7 @@ func GetAllUsers(ctx *gin.Context) {
 	if !noredis {
 		result := utils.RedisClient.Exists(context.Background(), ctx.Request.RequestURI)
 		if result.Val() != 0 {
-			users := models.User{}
+			users := []models.User{}
 			data := utils.RedisClient.Get(context.Background(), ctx.Request.RequestURI)
 			str := data.Val()
 			if err = json.Unmarshal([]byte(str), &users); err != nil {
@@ -97,17 +97,73 @@ func GetAllUsers(ctx *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "User ID"
-// @Success 200 {object} utils.Response{results=map[string]string}
+// @Success 200 {object} utils.Response{results=models.User}
 // @Failure 400 {object} utils.Response{success=bool,message=string}
+// @Failure 404 {object} utils.Response{success=bool,message=string}
+// @Failure 500 {object} utils.Response{success=bool,message=string}
 // @Router /user/{id} [get]
 func DetailUser(ctx *gin.Context) {
+	err := utils.RedisClient.Ping(context.Background()).Err()
+	noredis := false
+	if err != nil {
+		if strings.Contains(err.Error(), "refused") {
+			noredis = true
+		}
+	}
+
 	id := ctx.Param("id")
+	userID, err := strconv.Atoi(id)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, utils.Response{
+			Success: false,
+			Message: "Invalid user ID",
+		})
+		return
+	}
+
+	if !noredis {
+    exists := utils.RedisClient.Exists(context.Background(), ctx.Request.RequestURI)
+    if exists.Val() != 0 {
+      var cachedUser models.User
+      data := utils.RedisClient.Get(context.Background(), ctx.Request.RequestURI)
+      if err := json.Unmarshal([]byte(data.Val()), &cachedUser); err == nil {
+        ctx.JSON(http.StatusOK, utils.Response{
+          Success: true,
+          Message: "User detail (from Redis)",
+          Results: cachedUser,
+        })
+        return
+      }
+    }
+  }
+
+	user, err := models.FindUserByID(userID)
+  if err != nil {
+    if err.Error() == "user not found" {
+      ctx.JSON(http.StatusNotFound, utils.Response{
+        Success: false,
+        Message: "User not found",
+      })
+    } else {
+      ctx.JSON(http.StatusInternalServerError, utils.Response{
+        Success: false,
+        Message: "Failed to get user data",
+      })
+    }
+    return
+  }
+
+	if !noredis {
+    encoded, err := json.Marshal(user)
+    if err == nil {
+      utils.RedisClient.Set(context.Background(), ctx.Request.RequestURI, string(encoded), 0)
+    }
+  }
+
 	ctx.JSON(http.StatusOK, utils.Response{
 		Success: true,
-		Message: "Detail user",
-		Results: map[string]string{
-			"id": id,
-		},
+		Message: "User detail",
+		Results: user,
 	})
 }
 

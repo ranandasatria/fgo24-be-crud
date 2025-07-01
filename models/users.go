@@ -45,6 +45,31 @@ func FindAllUser(search string) ([]User, error) {
 	return users, nil
 }
 
+func FindUserByID(id int) (User, error) {
+  conn, err := utils.ConnectDB()
+  if err != nil {
+    return User{}, err
+  }
+  defer conn.Release()
+
+  row := conn.QueryRow(
+    context.Background(),
+    `SELECT id, name, email, password FROM users WHERE id = $1`,
+    id,
+  )
+
+  var user User
+  err = row.Scan(&user.ID, &user.Name, &user.Email, &user.Password)
+  if err != nil {
+    if err == pgx.ErrNoRows {
+      return User{}, fmt.Errorf("user not found")
+    }
+    return User{}, err
+  }
+
+  return user, nil
+}
+
 func FindOneUserByEmail(email string) (User, error) {
 	conn, err := utils.ConnectDB()
 	if err != nil {
