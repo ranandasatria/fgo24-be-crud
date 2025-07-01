@@ -178,7 +178,14 @@ func DetailUser(ctx *gin.Context) {
 // @Failure 500 {object} utils.Response{success=bool,message=string}
 // @Router /user [post]
 func CreateUser(ctx *gin.Context) {
-	fmt.Println("masuk")
+	err := utils.RedisClient.Ping(context.Background()).Err()
+	noredis := false
+	if err != nil {
+		if strings.Contains(err.Error(), "refused"){
+			noredis = true
+		}
+	}
+
 	var user models.User
 
 	if err := ctx.ShouldBindJSON(&user); err != nil {
@@ -197,6 +204,10 @@ func CreateUser(ctx *gin.Context) {
 		})
 		return
 	}
+
+	 if !noredis {
+    utils.RedisClient.Del(context.Background(), "/user")
+  }
 
 	ctx.JSON(http.StatusCreated, utils.Response{
 		Success: true,
