@@ -3,6 +3,7 @@ package models
 import (
 	"backend/utils"
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
@@ -16,6 +17,8 @@ type User struct {
 }
 
 func FindAllUser(search string) ([]User, error) {
+	result := utils.RedisClient.Exists(context.Background(), "all-users")
+	if result.Val() == 0 {
 	conn, err := utils.ConnectDB()
 	if err != nil {
 		return []User{}, err
@@ -37,10 +40,25 @@ func FindAllUser(search string) ([]User, error) {
 	}
 
 	users, err := pgx.CollectRows[User](rows, pgx.RowToStructByName)
+
 	if err != nil {
 		return []User{}, err
 	}
-	return users, err
+
+	encoded, err := json.Marshal(users)
+
+	if err != nil {
+		return []User{}, err
+	}
+	utils.RedisClient.Set(context.Background(), "all-users", string(encoded), 0)
+	return users, nil
+	} else {
+		data := utils.RedisClient.Get(context.Background(), "all-users")
+		str := data.Val()
+		users := []User{}
+		json.Unmarshal([]byte(str), &users)
+		return users, nil
+	}
 }
 
 func FindOneUserByEmail(email string) (User, error) {
