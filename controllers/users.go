@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -25,44 +24,41 @@ import (
 // @Failure 500 {object} utils.Response{success=bool,message=string}
 // @Router /user [get]
 func GetAllUsers(ctx *gin.Context) {
-
-	// page, _ := strconv.Atoi(ctx.DefaultQuery(""))
-
-	// userIDRaw, _ := ctx.Get("userID")
-	// userID := int(userIDRaw.(float64))
-	// fmt.Printf("User yang sedang login adalah %d\n", userID)
-
 	err := utils.RedisClient().Ping(context.Background()).Err()
 	noredis := false
-	if err != nil {
-		if strings.Contains(err.Error(), "refused") {
-			noredis = true
-		}
-	}
-
-	if !noredis {
-		result := utils.RedisClient().Exists(context.Background(), ctx.Request.RequestURI)
-		if result.Val() != 0 {
-			users := []models.User{}
-			data := utils.RedisClient().Get(context.Background(), ctx.Request.RequestURI)
-			str := data.Val()
-			if err = json.Unmarshal([]byte(str), &users); err != nil {
-				log.Println("Unmarshal error:", err)
-			} else {
-				ctx.JSON(http.StatusOK, utils.Response{
-					Success: true,
-					Message: "List all users (from Redis)",
-					Results: users,
-				})
-			}
-			return
-		}
+	if err != nil && strings.Contains(err.Error(), "refused") {
+		noredis = true
 	}
 
 	search := ctx.DefaultQuery("search", "")
-	users, err := models.FindAllUser(search)
+	pageStr := ctx.DefaultQuery("page", "1")
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	cacheKey := fmt.Sprintf("%s?page=%d&search=%s", ctx.FullPath(), page, search)
+
+	if !noredis {
+		result := utils.RedisClient().Exists(context.Background(), cacheKey)
+		if result.Val() != 0 {
+			users := []models.User{}
+			data := utils.RedisClient().Get(context.Background(), cacheKey)
+			if err = json.Unmarshal([]byte(data.Val()), &users); err == nil {
+				ctx.JSON(http.StatusOK, utils.Response{
+					Success: true,
+					Message: "List users (from Redis)",
+					Results: users,
+					Page:    page,
+					PerPage: 5,
+				})
+				return
+			}
+		}
+	}
+
+	users, err := models.FindAllUser(search, page)
 	if err != nil {
-		fmt.Println(err)
 		ctx.JSON(http.StatusInternalServerError, utils.Response{
 			Success: false,
 			Message: "Internal server error",
@@ -72,21 +68,17 @@ func GetAllUsers(ctx *gin.Context) {
 
 	if !noredis {
 		encoded, err := json.Marshal(users)
-		if err != nil {
-			fmt.Println(err)
-			ctx.JSON(http.StatusInternalServerError, utils.Response{
-				Success: false,
-				Message: "Failed to get user from database",
-			})
-			return
+		if err == nil {
+			utils.RedisClient().Set(context.Background(), cacheKey, string(encoded), 0)
 		}
-		utils.RedisClient().Set(context.Background(), ctx.Request.RequestURI, string(encoded), 0)
 	}
 
 	ctx.JSON(http.StatusOK, utils.Response{
 		Success: true,
 		Message: "List users",
 		Results: users,
+		Page:    page,
+		PerPage: 5,
 	})
 }
 
@@ -122,43 +114,43 @@ func DetailUser(ctx *gin.Context) {
 	}
 
 	if !noredis {
-    exists := utils.RedisClient().Exists(context.Background(), ctx.Request.RequestURI)
-    if exists.Val() != 0 {
-      var cachedUser models.User
-      data := utils.RedisClient().Get(context.Background(), ctx.Request.RequestURI)
-      if err := json.Unmarshal([]byte(data.Val()), &cachedUser); err == nil {
-        ctx.JSON(http.StatusOK, utils.Response{
-          Success: true,
-          Message: "User detail (from Redis)",
-          Results: cachedUser,
-        })
-        return
-      }
-    }
-  }
+		exists := utils.RedisClient().Exists(context.Background(), ctx.Request.RequestURI)
+		if exists.Val() != 0 {
+			var cachedUser models.User
+			data := utils.RedisClient().Get(context.Background(), ctx.Request.RequestURI)
+			if err := json.Unmarshal([]byte(data.Val()), &cachedUser); err == nil {
+				ctx.JSON(http.StatusOK, utils.Response{
+					Success: true,
+					Message: "User detail (from Redis)",
+					Results: cachedUser,
+				})
+				return
+			}
+		}
+	}
 
 	user, err := models.FindUserByID(userID)
-  if err != nil {
-    if err.Error() == "user not found" {
-      ctx.JSON(http.StatusNotFound, utils.Response{
-        Success: false,
-        Message: "User not found",
-      })
-    } else {
-      ctx.JSON(http.StatusInternalServerError, utils.Response{
-        Success: false,
-        Message: "Failed to get user data",
-      })
-    }
-    return
-  }
+	if err != nil {
+		if err.Error() == "user not found" {
+			ctx.JSON(http.StatusNotFound, utils.Response{
+				Success: false,
+				Message: "User not found",
+			})
+		} else {
+			ctx.JSON(http.StatusInternalServerError, utils.Response{
+				Success: false,
+				Message: "Failed to get user data",
+			})
+		}
+		return
+	}
 
 	if !noredis {
-    encoded, err := json.Marshal(user)
-    if err == nil {
-      utils.RedisClient().Set(context.Background(), ctx.Request.RequestURI, string(encoded), 0)
-    }
-  }
+		encoded, err := json.Marshal(user)
+		if err == nil {
+			utils.RedisClient().Set(context.Background(), ctx.Request.RequestURI, string(encoded), 0)
+		}
+	}
 
 	ctx.JSON(http.StatusOK, utils.Response{
 		Success: true,
@@ -181,7 +173,7 @@ func CreateUser(ctx *gin.Context) {
 	err := utils.RedisClient().Ping(context.Background()).Err()
 	noredis := false
 	if err != nil {
-		if strings.Contains(err.Error(), "refused"){
+		if strings.Contains(err.Error(), "refused") {
 			noredis = true
 		}
 	}
@@ -205,9 +197,9 @@ func CreateUser(ctx *gin.Context) {
 		return
 	}
 
-	 if !noredis {
-    utils.RedisClient().Del(context.Background(), "/user")
-  }
+	if !noredis {
+		utils.RedisClient().Del(context.Background(), "/user")
+	}
 
 	ctx.JSON(http.StatusCreated, utils.Response{
 		Success: true,
@@ -231,11 +223,10 @@ func DeleteUser(ctx *gin.Context) {
 	err := utils.RedisClient().Ping(context.Background()).Err()
 	noredis := false
 	if err != nil {
-		if strings.Contains(err.Error(), "refused"){
+		if strings.Contains(err.Error(), "refused") {
 			noredis = true
 		}
 	}
-
 
 	id := ctx.Param("id")
 	userID, _ := strconv.Atoi(id)
@@ -256,9 +247,9 @@ func DeleteUser(ctx *gin.Context) {
 		return
 	}
 
-	 if !noredis {
-    utils.RedisClient().Del(context.Background(), "/user")
-  }
+	if !noredis {
+		utils.RedisClient().Del(context.Background(), "/user")
+	}
 
 	ctx.JSON(http.StatusOK, utils.Response{
 		Success: true,
@@ -283,7 +274,7 @@ func UpdateUser(ctx *gin.Context) {
 	err := utils.RedisClient().Ping(context.Background()).Err()
 	noredis := false
 	if err != nil {
-		if strings.Contains(err.Error(), "refused"){
+		if strings.Contains(err.Error(), "refused") {
 			noredis = true
 		}
 	}
@@ -317,8 +308,8 @@ func UpdateUser(ctx *gin.Context) {
 	}
 
 	if !noredis {
-    utils.RedisClient().Del(context.Background(), "/user")
-  }
+		utils.RedisClient().Del(context.Background(), "/user")
+	}
 
 	ctx.JSON(http.StatusOK, utils.Response{
 		Success: true,

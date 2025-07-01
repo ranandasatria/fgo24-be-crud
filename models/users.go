@@ -15,7 +15,7 @@ type User struct {
 	Password string `json:"password" db:"password"`
 }
 
-func FindAllUser(search string) ([]User, error) {
+func FindAllUser(search string, page int) ([]User, error) {
 	conn, err := utils.ConnectDB()
 	if err != nil {
 		return []User{}, err
@@ -23,13 +23,18 @@ func FindAllUser(search string) ([]User, error) {
 
 	defer conn.Release()
 
+	limit := 5
+	offset := (page - 1) * limit
+
 	rows, err := conn.Query(
 		context.Background(),
 		`
 		SELECT id, name, email, password FROM users
 		WHERE name ILIKE $1
+		ORDER BY id
+		LIMIT $2 OFFSET $3
 		`,
-		fmt.Sprintf("%%%s%%", search),
+		fmt.Sprintf("%%%s%%", search), limit, offset,
 	)
 
 	if err != nil {
