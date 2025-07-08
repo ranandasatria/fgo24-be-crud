@@ -1,3 +1,4 @@
+-- Active: 1751973794718@@127.0.0.1@5433@postgres
 # Go User Management (CRUD) API
 
 A simple user management RESTful API built with Go, Gin framework, and PostgreSQL. This project demonstrates how to build a modular backend with CRUD operations (Create, Read, Update, Delete), upload file, middleware authentication using JWT, and PostgreSQL integration using pgx.
