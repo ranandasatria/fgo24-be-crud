@@ -15,11 +15,19 @@ import (
 
 func InvalidateUserCache() {
 	ctx := context.Background()
-	iter := utils.RedisClient().Scan(ctx, 0, "/user*", 0).Iterator()
+	pattern := "*user*"
+
+	iter := utils.RedisClient().Scan(ctx, 0, pattern, 0).Iterator()
 	for iter.Next(ctx) {
+		fmt.Println("Deleting cache key:", iter.Val()) 
 		utils.RedisClient().Del(ctx, iter.Val())
 	}
+
+	if err := iter.Err(); err != nil {
+		fmt.Println("Error during Redis SCAN:", err)
+	}
 }
+
 
 // GetAllUsers godoc
 // @Summary Get all users
@@ -28,6 +36,7 @@ func InvalidateUserCache() {
 // @Accept json
 // @Produce json
 // @Param search query string false "Search by name or email"
+// @Param page query string false "Page"
 // @Success 200 {object} utils.Response{results=[]models.User}
 // @Failure 500 {object} utils.Response{success=bool,message=string}
 // @Router /user [get]

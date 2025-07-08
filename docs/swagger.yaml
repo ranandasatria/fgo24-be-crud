@@ -16,6 +16,8 @@ definitions:
       errors: {}
       message:
         type: string
+      page: {}
+      perPage: {}
       results: {}
       success:
         type: boolean
@@ -34,6 +36,10 @@ paths:
       - description: Search by name or email
         in: query
         name: search
+        type: string
+      - description: Page
+        in: query
+        name: page
         type: string
       produces:
       - application/json
@@ -175,12 +181,32 @@ paths:
             - $ref: '#/definitions/utils.Response'
             - properties:
                 results:
-                  additionalProperties:
-                    type: string
-                  type: object
+                  $ref: '#/definitions/models.User'
               type: object
         "400":
           description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                message:
+                  type: string
+                success:
+                  type: boolean
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                message:
+                  type: string
+                success:
+                  type: boolean
+              type: object
+        "500":
+          description: Internal Server Error
           schema:
             allOf:
             - $ref: '#/definitions/utils.Response'
