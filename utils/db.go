@@ -2,12 +2,20 @@ package utils
 
 import (
 	"context"
+	"fmt"
+	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func ConnectDB() (*pgxpool.Conn, error) {
-	connectionString := "postgres://postgres:1@localhost:5433/backend"
+	host := os.Getenv("PGHOST")
+	port := os.Getenv("PGPORT")
+	user := os.Getenv("PGUSER")
+	pass := os.Getenv("PGPASSWORD")
+	db := os.Getenv("PGDATABASE")
+
+	connectionString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s", user, pass, host, port, db)
 
 	pool, err := pgxpool.New(context.Background(), connectionString)
 	if err != nil {
@@ -20,5 +28,4 @@ func ConnectDB() (*pgxpool.Conn, error) {
 	}
 
 	return conn, nil
-
 }

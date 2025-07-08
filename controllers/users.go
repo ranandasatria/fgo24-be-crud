@@ -13,6 +13,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func InvalidateUserCache() {
+	ctx := context.Background()
+	iter := utils.RedisClient().Scan(ctx, 0, "/user*", 0).Iterator()
+	for iter.Next(ctx) {
+		utils.RedisClient().Del(ctx, iter.Val())
+	}
+}
+
 // GetAllUsers godoc
 // @Summary Get all users
 // @Tags users
@@ -198,8 +206,8 @@ func CreateUser(ctx *gin.Context) {
 	}
 
 	if !noredis {
-		utils.RedisClient().Del(context.Background(), "/user")
-	}
+	InvalidateUserCache()
+}
 
 	ctx.JSON(http.StatusCreated, utils.Response{
 		Success: true,
@@ -248,8 +256,8 @@ func DeleteUser(ctx *gin.Context) {
 	}
 
 	if !noredis {
-		utils.RedisClient().Del(context.Background(), "/user")
-	}
+	InvalidateUserCache()
+}
 
 	ctx.JSON(http.StatusOK, utils.Response{
 		Success: true,
@@ -307,9 +315,9 @@ func UpdateUser(ctx *gin.Context) {
 		return
 	}
 
-	if !noredis {
-		utils.RedisClient().Del(context.Background(), "/user")
-	}
+if !noredis {
+	InvalidateUserCache()
+}
 
 	ctx.JSON(http.StatusOK, utils.Response{
 		Success: true,
