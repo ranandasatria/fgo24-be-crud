@@ -1,16 +1,15 @@
-name: Push backend image to GHCR
+name: Push Backend Imge to ghcr
 run-name: Release Image GHCR
 on: [push]
-jobs: 
+jobs:
   push-image-to-ghcr:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - run: echo "Checkout to My great API to ghcr"
+      - name: Checkout Code
         uses: actions/checkout@v4
       - name: Build and publish a Docker image for ${{ github.repository }}
         uses: macbre/push-to-ghcr@master
         with:
-          image_name: fgo24-be-crud
+          image_name: ${{ github.repository }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          owner: ranandasatria
-          public: true
