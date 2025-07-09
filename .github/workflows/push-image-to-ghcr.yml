@@ -45,7 +45,7 @@ jobs:
           port: 9301
           key: ${{ secrets.VPS_PRIVATE_KEY }}
           source: "docker-compose.yml"
-          target: "/root/deploy"
+          target: "/home/nanda/deploy"
           strip_components: 0
 
       - name: Deploy on VPS via SSH
@@ -56,7 +56,7 @@ jobs:
           port: 9301
           key: ${{ secrets.VPS_PRIVATE_KEY }}
           script: |
-            cd /root/deploy
+            cd /home/nanda/deploy
             docker pull ghcr.io/ranandasatria/fgo24-be-crud:latest
             docker compose down || true
             docker compose up -d
