@@ -1,9 +1,8 @@
-version: "3.9"
-
 services:
   app:
     image: ghcr.io/ranandasatria/fgo24-be-crud:latest
-
+    env_file:
+      - .env
     ports:
       - "8888:8888"
     depends_on:
@@ -13,10 +12,9 @@ services:
       - netapp
 
   postgres:
-    image: postgres:16
-    restart: always
+    image: postgres
     environment:
-      POSTGRES_PASSWORD: 1234
+      POSTGRES_PASSWORD: 1
     volumes:
       - data_postgres:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -24,8 +22,7 @@ services:
       - netapp
 
   redis:
-    image: redis:7
-    restart: always
+    image: redis
     volumes:
       - data_redis:/data
     networks:
