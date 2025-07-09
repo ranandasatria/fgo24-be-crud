@@ -92,7 +92,7 @@ func GetAllUsers(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, utils.Response{
 		Success: true,
-		Message: "List users",
+		Message: "List users (this is from vps)",
 		Results: users,
 		Page:    page,
 		PerPage: 5,
