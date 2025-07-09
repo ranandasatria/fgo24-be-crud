@@ -1,15 +1,35 @@
 name: Push backend image to GHCR
 run-name: Release Image GHCR
 on: [push]
-jobs: 
-  push-image-to-ghcr:
+jobs:
+  push-image-toghcr:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Build and publish a Docker image for ${{ github.repository }}
-        uses: macbre/push-to-ghcr@master
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          image_name: ranandasatria/fgo24-be-crud
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          public: true
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push Docker image to GHCR
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/ranandasatria/fgo24-be-crud:latest
+          build-args: |
+            APP_PORT=${{ secrets.APP_PORT }}
+            APP_SECRET=${{ secrets.APP_SECRET }}
+            PGHOST=${{ secrets.PGHOST }}
+            PGPORT=${{ secrets.PGPORT }}
+            PGDATABASE=${{ secrets.PGDATABASE }}
+            PGUSER=${{ secrets.PGUSER }}
+            PGPASSWORD=${{ secrets.PGPASSWORD }}
+            RDADDRESS=${{ secrets.RDADDRESS }}
+            RDPASSWORD=${{ secrets.RDPASSWORD }}
+            RDDB=${{ secrets.RDDB }}

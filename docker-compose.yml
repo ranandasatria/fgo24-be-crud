@@ -1,28 +1,22 @@
+version: "3.9"
+
 services:
   app:
-    build:
-      context: .
-      args:
-        APP_PORT: ${APP_PORT}
-        APP_SECRET: ${APP_SECRET}
-        PGHOST: ${PGHOST}
-        PGPORT: ${PGPORT}
-        PGDATABASE: ${PGDATABASE}
-        PGUSER: ${PGUSER}
-        PGPASSWORD: ${PGPASSWORD}
-        RDADDRESS: ${RDADDRESS}
-        RDPASSWORD: ${RDPASSWORD}
-        RDDB: ${RDDB}
+    image: ghcr.io/ranandasatria/fgo24-be-crud:latest
+
     ports:
-      - 8888:8888
+      - "8888:8888"
     depends_on:
       - postgres
       - redis
+    networks:
+      - netapp
 
   postgres:
-    image: postgres
+    image: postgres:16
+    restart: always
     environment:
-      - POSTGRES_PASSWORD=1
+      POSTGRES_PASSWORD: 1234
     volumes:
       - data_postgres:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -30,7 +24,8 @@ services:
       - netapp
 
   redis:
-    image: redis
+    image: redis:7
+    restart: always
     volumes:
       - data_redis:/data
     networks:
