@@ -1,8 +1,6 @@
 name: Push backend image to GHCR
 run-name: Release Image GHCR
-
 on: [push]
-
 jobs:
   push-image-toghcr:
     runs-on: ubuntu-latest
