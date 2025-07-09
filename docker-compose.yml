@@ -1,8 +1,18 @@
 services:
   app:
-    build: .
-    networks:
-      - netapp
+    build:
+      context: .
+      args:
+        APP_PORT: ${APP_PORT}
+        APP_SECRET: ${APP_SECRET}
+        PGHOST: ${PGHOST}
+        PGPORT: ${PGPORT}
+        PGDATABASE: ${PGDATABASE}
+        PGUSER: ${PGUSER}
+        PGPASSWORD: ${PGPASSWORD}
+        RDADDRESS: ${RDADDRESS}
+        RDPASSWORD: ${RDPASSWORD}
+        RDDB: ${RDDB}
     ports:
       - 8888:8888
     depends_on:
