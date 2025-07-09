@@ -51,10 +51,9 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           port: 9301
           key: ${{ secrets.VPS_PRIVATE_KEY }}
-          source: |
-            docker-compose.yml
-            .env
+          source: "docker-compose.yml,.env"
           target: /home/nanda/deploy
+
 
       - name: Deploy on VPS
         uses: appleboy/ssh-action@v1.0.0
