@@ -43,7 +43,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           port: 9301
-          key: ${{ secrets.VPS_SSH_KEY }}
+          key: ${{ secrets.VPS_PRIVATE_KEY }}
           source: "docker-compose.yml"
           target: "/root/deploy"
           strip_components: 0
@@ -54,7 +54,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           port: 9301
-          key: ${{ secrets.VPS_SSH_KEY }}
+          key: ${{ secrets.VPS_PRIVATE_KEY }}
           script: |
             cd /root/deploy
             docker pull ghcr.io/ranandasatria/fgo24-be-crud:latest
