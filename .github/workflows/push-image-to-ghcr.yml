@@ -1,0 +1,14 @@
+name: Push backend image to GHCR
+run-name: Release Image GHCR
+on: [push]
+jobs: 
+  push-image-to-ghcr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Build and publish a Docker image for ${{ github.repository }}
+        uses: macbre/push-to-ghcr@master
+        with:
+          image_name: ${{ github.repository }} 
+          github_token: ${{ secrets.GITHUB_TOKEN }} 
